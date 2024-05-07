@@ -13,7 +13,7 @@ spec:
     # ref https://github.com/grafana/loki/tree/main/production/helm/loki
     chart: 'loki'
     repoURL: 'https://grafana.github.io/helm-charts'
-    targetRevision: 6.1.0 # application v3.0.0
+    targetRevision: 6.5.0 # application v3.0.0
     #targetRevision: 5.47.2 # application v2.9.6
     helm:
       version: v3
@@ -23,6 +23,8 @@ spec:
           auth_enabled: false
           commonConfig:
             replication_factor: 1
+          storage:
+            type: s3
           schemaConfig:
             configs:
               - from: 2024-04-01
@@ -32,70 +34,20 @@ spec:
                 index:
                   prefix: loki_index_
                   period: 24h
-          ingester:
-            chunk_encoding: snappy
-          tracing:
-            enabled: false
-          querier:
-            # Default is 4, if you have enough memory and CPU you can increase, reduce if OOMing
-            max_concurrent: 2
-        #gateway:
-        #  ingress:
-        #    enabled: true
-        #    hosts:
-        #      - host: FIXME
-        #        paths:
-        #          - path: /
-        #            pathType: Prefix
 
-        deploymentMode: SingleBinary
-        singleBinary:
-          replicas: 1
-          resources:
-            limits:
-              cpu: 3
-              memory: 4Gi
-            requests:
-              cpu: 2
-              memory: 1.5Gi
-          extraEnv:
-            # Keep a little bit lower than memory limits
-            - name: GOMEMLIMIT
-              value: 3750MiB
-
-        chunksCache:
-          # default is 500MB, with limited memory keep this smaller
-          #writebackSizeLimit: 10MB
-          enabled: false
         # Enable minio for storage
         minio:
           enabled: true
-
-        # Zero out replica counts of other deployment modes
+        gateway:
+          replicas: 1
         backend:
-          replicas: 0
-        read:
-          replicas: 0
+          replicas: 1
         write:
-          replicas: 0
-        ingester:
-          replicas: 0
-        querier:
-          replicas: 0
-        queryFrontend:
-          replicas: 0
-        queryScheduler:
-          replicas: 0
-        distributor:
-          replicas: 0
-        compactor:
-          replicas: 0
-        indexGateway:
-          replicas: 0
-        bloomCompactor:
-          replicas: 0
-        bloomGateway:
-          replicas: 0
+          replicas: 1
+        read:
+          replicas: 1
+        chunksCache:
+          enabled: false
   project: default
   syncPolicy:
     automated:

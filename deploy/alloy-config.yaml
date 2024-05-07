@@ -5,35 +5,6 @@ metadata:
   namespace: monitoring
 data:
   config.alloy: |
-    // prometheus reciever
-    prometheus.scrape "node" {
-        targets = [{
-            __address__ = "prometheus-prometheus-node-exporter:9100",
-        }]
-        forward_to     = [prometheus.remote_write.prometheus.receiver]
-        job_name       = "node"
-        scrape_interval = "30s"
-        metrics_path   = "/metrics"
-    }
-    prometheus.scrape "state" {
-        targets = [{
-            __address__ = "prometheus-kube-state-metrics:8080",
-        }]
-        forward_to     = [prometheus.remote_write.prometheus.receiver]
-        job_name       = "state"
-        scrape_interval = "30s"
-        metrics_path   = "/metrics"
-    }
-    prometheus.scrape "quarkus" {
-        targets = [{
-            __address__ = "quarkus.default.svc.cluster.local",
-        }]
-        forward_to     = [prometheus.remote_write.prometheus.receiver]
-        job_name       = "otel-collector-examples"
-        scrape_interval = "30s"
-        metrics_path   = "/q/metrics"
-    }
-
     // log reciever
     discovery.kubernetes "k8s" {
         role = "pod"
@@ -73,17 +44,6 @@ data:
         }
     }
 
-    // prometheus exporter
-    prometheus.remote_write "prometheus" {
-        endpoint {
-            url = format("http://%s/api/v1/push", coalesce(env("REMOTE_WRITE_HOST"), "prometheus-server:3100"),
-            )
-            headers = {
-                "X-Scope-OrgID" = "example",
-            }
-        }
-    }
-
     // loki exporter
     loki.write "loki" {
         endpoint {
@@ -109,11 +69,6 @@ data:
     }
 
     // alloy observability
-    prometheus.exporter.self "alloy" {}
-    prometheus.scrape "alloy" {
-        targets    = prometheus.exporter.self.alloy.targets
-        forward_to = [prometheus.remote_write.prometheus.receiver]
-    }
     logging {
         level = "debug"
         // Forward internal logs to the local Loki instance.
